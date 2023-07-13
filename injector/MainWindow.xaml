@@ -1,0 +1,24 @@
+﻿<Window x:Class="injector.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DLL Injector" Height="150" Width="284" Loaded="Window_Loaded">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ComboBox Name="ProcessList" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" Width="250"/>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Button Content="Inject DLL" Click="ButtonInject_Click" Margin="10"/>
+            <Button Content="Refresh Process List" Click="ButtonRefresh_Click" Margin="10"/>
+            <Button x:Name="ButtonSelectDll" Content="Select DLL" Click="ButtonSelectDll_Click" Height="25" />
+
+        </StackPanel>
+
+        <Button Content="Update DLL" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10"/>
+    </Grid>
+</Window>
