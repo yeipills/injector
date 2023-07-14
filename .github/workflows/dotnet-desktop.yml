@@ -101,7 +101,12 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       shell: bash
+      
+    - name: Archive files
+      run: |
+        Compress-Archive -Path ./MiAplicacion/bin/${{ matrix.configuration }}/net6.0/win10-x64/publish/* -DestinationPath ./MiAplicacion/bin/${{ matrix.configuration }}/net6.0/win10-x64/publish/injector.zip
 
+    
     # Upload build artifacts to the existing release
     - name: Upload Release Asset
       id: upload-release-asset 
@@ -110,7 +115,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets
-        #asset_path: ./MiAplicacion/bin/${{ matrix.configuration }}/net6.0/win10-x64/publish/injector.zip
+        asset_path: ./MiAplicacion/bin/${{ matrix.configuration }}/net6.0/win10-x64/publish/injector.zip
         asset_name: injector.zip
         asset_content_type: injector/zip
 
