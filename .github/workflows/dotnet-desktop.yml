@@ -55,7 +55,7 @@ jobs:
     runs-on: windows-latest
 
     env:
-      Solution_Name: MiAplicacion.sln
+      Solution_Name: injector.sln
       Wap_Project_Directory: MiAplicacion.Wap
       Wap_Project_Path: MiAplicacion.Wap\MiAplicacion.Wap.wapproj
 
