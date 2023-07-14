@@ -110,7 +110,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.get_release.outputs.release_id }}/assets
-        asset_path: ./MiAplicacion/bin/${{ matrix.configuration }}/net6.0/win10-x64/publish/MiAplicacion.zip
+        asset_path: ./MiAplicacion/bin/${{ matrix.configuration }}/net6.0/win10-x64/publish/injector.zip
         asset_name: MiAplicacion.zip
         asset_content_type: application/zip
 
