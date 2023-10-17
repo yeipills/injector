@@ -18,11 +18,12 @@ Para poder ejecutar este programa necesitas:
 Sigue estos pasos para ejecutar el proyecto:
 
 1. Clona el repositorio
+   ```
    git clone https://github.com/tu_nombre_de_usuario/dll-injector.git
+   ```
+3. Abre el archivo .sln en tu entorno de desarrollo
 
-2. Abre el archivo .sln en tu entorno de desarrollo
-
-3. Compila y ejecuta el programa.
+4. Compila y ejecuta el programa.
 
 ## Uso
 
