@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -10,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Newtonsoft.Json.Linq;
 using Microsoft.Win32;
+using System.Linq;
 
 namespace injector
 {
@@ -20,6 +20,9 @@ namespace injector
         private List<Process> _processes;
         private Process _selectedProcess;
         private string _dllPath = null;
+
+        // Instancia estática de HttpClient
+        private static readonly HttpClient client = new ();
 
         [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
         static extern IntPtr OpenProcess(uint processAccess, bool bInheritHandle, int processId);
@@ -44,6 +47,9 @@ namespace injector
             InitializeComponent();
             _processes = new List<Process>();
             ProcessList.SelectionChanged += ProcessList_SelectionChanged;
+
+            // Inicializar HttpClient
+            client.DefaultRequestHeaders.Add("User-Agent", "request");
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -52,12 +58,12 @@ namespace injector
             await DownloadLatestDll();
         }
 
-
         private void ProcessList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             string selectedProcessName = (string)ProcessList.SelectedItem;
             _selectedProcess = _processes.FirstOrDefault(p => p.ProcessName == selectedProcessName);
         }
+
         private void LoadProcesses()
         {
             _processes = Process.GetProcesses().ToList();
@@ -75,29 +81,29 @@ namespace injector
             }
         }
 
-
         private async Task DownloadLatestDll()
         {
-            using (var client = new HttpClient())
+            DownloadStatus.Visibility = Visibility.Visible;
+            DownloadProgress.Visibility = Visibility.Visible;
+            DownloadProgress.IsIndeterminate = true; // Animación de progreso indeterminado
+
+            var json = await client.GetStringAsync(GITHUB_API_URL);
+            var jobject = JObject.Parse(json);
+            var latestReleaseUrl = jobject["assets"][0]["browser_download_url"].ToString();
+            var bytes = await client.GetByteArrayAsync(latestReleaseUrl);
+            string downloadsFolderPath = GetDownloadsFolderPath();
+            string downloadFilePath = Path.Combine(downloadsFolderPath, DLL_NAME);
+            File.WriteAllBytes(downloadFilePath, bytes);
+            _dllPath = downloadFilePath;
+            Debug.WriteLine($"Downloaded DLL to: {_dllPath}");
+            if (!File.Exists(downloadFilePath))
             {
-                client.DefaultRequestHeaders.Add("User-Agent", "request");
-                var json = await client.GetStringAsync(GITHUB_API_URL);
-                var jobject = JObject.Parse(json);
-                var latestReleaseUrl = jobject["assets"][0]["browser_download_url"].ToString();
-                var bytes = await client.GetByteArrayAsync(latestReleaseUrl);
-                string downloadsFolderPath = GetDownloadsFolderPath();
-                string downloadFilePath = Path.Combine(downloadsFolderPath, DLL_NAME);
-                File.WriteAllBytes(downloadFilePath, bytes);
-                _dllPath = downloadFilePath;
-                Debug.WriteLine($"Downloaded DLL to: {_dllPath}");
-                if (!File.Exists(downloadFilePath))
-                {
-                    throw new Exception("Failed to download DLL file.");
-                }
+                throw new Exception("Failed to download DLL file.");
             }
+
+            DownloadStatus.Visibility = Visibility.Collapsed;
+            DownloadProgress.Visibility = Visibility.Collapsed;
         }
-
-
 
         private void ButtonInject_Click(object sender, RoutedEventArgs e)
         {
@@ -129,9 +135,6 @@ namespace injector
                 MessageBox.Show($"DLL injection failed: {ex.Message}");
             }
         }
-
-
-
 
         private void DLLInjector(Process process, string dllPath)
         {
@@ -172,13 +175,10 @@ namespace injector
             return downloadsFolderPath;
         }
 
-
         private void ButtonRefresh_Click(object sender, RoutedEventArgs e)
         {
             LoadProcesses();
-            
         }
-        
 
         private void ButtonSelectDll_Click(object sender, RoutedEventArgs e)
         {
@@ -188,6 +188,16 @@ namespace injector
             {
                 _dllPath = openFileDialog.FileName;
             }
+        }
+
+        private void ProcessList_SelectionChanged_1(object sender, SelectionChangedEventArgs e)
+        {
+            // Este método parece estar vacío. Si no tiene funcionalidad, considera eliminarlo.
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }
