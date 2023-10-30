@@ -1,0 +1,32 @@
+name: Update Release
+
+on:
+  push:
+    branches:
+      - master  # Asume que estás usando la rama 'main'. Cambia esto si usas otra rama como predeterminada.
+
+jobs:
+  update_release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Get release ID
+      id: get_release_id
+      run: |
+        RELEASE_ID=$(curl --silent "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/tags/v1.0.0" \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" | jq '.id')
+        echo "::set-output name=release_id::$RELEASE_ID"
+      shell: bash
+
+    - name: Update release
+      run: |
+        curl -X PATCH "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/${{ steps.get_release_id.outputs.release_id }}" \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "name": "Release v1.0.0",
+            "body": "Updated release description"
+          }'
+      shell: bash
