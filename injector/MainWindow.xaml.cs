@@ -1,16 +1,17 @@
-﻿using Microsoft.Win32;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Microsoft.Win32;
+using Newtonsoft.Json.Linq;
 
 namespace injector
 {
@@ -18,14 +19,20 @@ namespace injector
     {
         private const string GITHUB_API_URL = "https://api.github.com/repos/YimMenu/YimMenu/releases/tags/nightly";
         private const string DLL_NAME = "YimMenu.dll";
+
+        // Constantes para inyección de DLL
+        private const uint PROCESS_ALL_ACCESS = 0x001F0FFF;
+        private const uint MEM_COMMIT_RESERVE = 0x00001000 | 0x00002000;
+        private const uint PAGE_READWRITE = 0x04;
+
         private List<Process> _processes;
         private Process _selectedProcess;
         private string _dllPath = null;
 
         // Instancia estática de HttpClient
-        private static readonly HttpClient client = new();
+        private static readonly HttpClient client = new HttpClient { DefaultRequestHeaders = { { "User-Agent", "request" } } };
 
-        // Declaración de funciones externas desde kernel32.dll
+        // Declaraciones de funciones externas desde kernel32.dll
         [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
         static extern IntPtr OpenProcess(uint processAccess, bool bInheritHandle, int processId);
 
@@ -49,20 +56,16 @@ namespace injector
             InitializeComponent();
             _processes = new List<Process>();
             ProcessList.SelectionChanged += ProcessList_SelectionChanged;
-
-            // Inicializar HttpClient con un encabezado de agente de usuario
-            client.DefaultRequestHeaders.Add("User-Agent", "request");
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadProcesses(); // Cargar la lista de procesos
-            await DownloadLatestDll(); // Descargar la DLL más reciente
+            LoadProcesses();
+            await DownloadLatestDll();
         }
 
         private void ProcessList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Manejar el cambio de selección en la lista de procesos
             string selectedProcessName = (string)ProcessList.SelectedItem;
             Process? process = _processes.FirstOrDefault(p => p.ProcessName == selectedProcessName);
             _selectedProcess = process;
@@ -76,14 +79,14 @@ namespace injector
             if (gtaProcess != null)
             {
                 _processes.Remove(gtaProcess);
-                _processes.Insert(0, gtaProcess); // Mover el proceso GTA5 al principio de la lista
+                _processes.Insert(0, gtaProcess);
             }
 
             ProcessList.ItemsSource = _processes.Select(p => p.ProcessName);
 
             if (gtaProcess != null)
             {
-                ProcessList.SelectedItem = "GTA5"; // Seleccionar GTA5 si está presente
+                ProcessList.SelectedItem = "GTA5";
             }
         }
 
@@ -91,18 +94,17 @@ namespace injector
         {
             DownloadStatus.Visibility = Visibility.Visible;
             DownloadProgress.Visibility = Visibility.Visible;
-            DownloadProgress.IsIndeterminate = true; // Configurar animación de progreso indeterminado
+            DownloadProgress.IsIndeterminate = true;
 
-            var json = await client.GetStringAsync(GITHUB_API_URL); // Descargar información desde la API de GitHub
+            var json = await client.GetStringAsync(GITHUB_API_URL);
             var jobject = JObject.Parse(json);
-            var latestReleaseUrl = jobject["assets"][0]["browser_download_url"].ToString(); // Obtener la URL de descarga de la última versión
-            var bytes = await client.GetByteArrayAsync(latestReleaseUrl); // Descargar la DLL en bytes
+            var latestReleaseUrl = jobject["assets"][0]["browser_download_url"].ToString();
+            var bytes = await client.GetByteArrayAsync(latestReleaseUrl);
             string downloadsFolderPath = GetDownloadsFolderPath();
             string downloadFilePath = Path.Combine(downloadsFolderPath, DLL_NAME);
-            File.WriteAllBytes(downloadFilePath, bytes); // Guardar la DLL en el disco
+            File.WriteAllBytes(downloadFilePath, bytes);
 
-            _dllPath = downloadFilePath; // Almacenar la ruta de la DLL descargada
-            Debug.WriteLine($"DLL descargado en: {_dllPath}");
+            _dllPath = downloadFilePath;
 
             if (!File.Exists(downloadFilePath))
             {
@@ -135,7 +137,7 @@ namespace injector
 
             try
             {
-                DLLInjector(_selectedProcess, _dllPath); // Inyectar la DLL en el proceso seleccionado
+                DLLInjector(_selectedProcess, _dllPath);
                 MessageBox.Show("DLL inyectado exitosamente.");
             }
             catch (Exception ex)
@@ -146,35 +148,35 @@ namespace injector
 
         private void DLLInjector(Process process, string dllPath)
         {
-            var buffer = System.Text.Encoding.Default.GetBytes(dllPath + "\0");
-            var processHandle = OpenProcess(0x001F0FFF, false, process.Id); // Abrir el proceso seleccionado
+            var buffer = Encoding.Default.GetBytes(dllPath + "\0");
+            var processHandle = OpenProcess(PROCESS_ALL_ACCESS, false, process.Id);
 
             if (processHandle == IntPtr.Zero)
             {
                 throw new Exception($"Fallo al abrir el proceso. Error: {Marshal.GetLastWin32Error()}");
             }
 
-            var allocMemAddress = VirtualAllocEx(processHandle, IntPtr.Zero, (uint)buffer.Length, 0x00001000 | 0x00002000, 0x04); // Asignar memoria en el proceso remoto
+            var allocMemAddress = VirtualAllocEx(processHandle, IntPtr.Zero, (uint)buffer.Length, MEM_COMMIT_RESERVE, PAGE_READWRITE);
 
             if (allocMemAddress == IntPtr.Zero)
             {
                 throw new Exception($"Fallo al asignar memoria en el proceso remoto. Error: {Marshal.GetLastWin32Error()}");
             }
 
-            if (!WriteProcessMemory(processHandle, allocMemAddress, buffer, (uint)buffer.Length, out _)) // Escribir la ruta del archivo DLL en la memoria del proceso remoto
+            if (!WriteProcessMemory(processHandle, allocMemAddress, buffer, (uint)buffer.Length, out _))
             {
                 throw new Exception($"Fallo al escribir en la memoria del proceso remoto. Error: {Marshal.GetLastWin32Error()}");
             }
 
             var kernel32Handle = GetModuleHandle("kernel32.dll");
-            var loadLibraryAddr = GetProcAddress(kernel32Handle, "LoadLibraryA"); // Obtener la dirección de la función LoadLibraryA
+            var loadLibraryAddr = GetProcAddress(kernel32Handle, "LoadLibraryA");
 
             if (loadLibraryAddr == IntPtr.Zero)
             {
                 throw new Exception($"Fallo al obtener la dirección de LoadLibraryA. Error: {Marshal.GetLastWin32Error()}");
             }
 
-            if (CreateRemoteThread(processHandle, IntPtr.Zero, 0, loadLibraryAddr, allocMemAddress, 0, IntPtr.Zero) == IntPtr.Zero) // Crear un hilo remoto para cargar la DLL
+            if (CreateRemoteThread(processHandle, IntPtr.Zero, 0, loadLibraryAddr, allocMemAddress, 0, IntPtr.Zero) == IntPtr.Zero)
             {
                 throw new Exception($"Fallo al crear un hilo remoto en el proceso objetivo. Error: {Marshal.GetLastWin32Error()}");
             }
@@ -182,58 +184,54 @@ namespace injector
 
         private string GetDownloadsFolderPath()
         {
-            string downloadsFolderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"); // Obtener la carpeta de descargas del usuario
-            return downloadsFolderPath;
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
         }
 
         private void ButtonRefresh_Click(object sender, RoutedEventArgs e)
         {
-            LoadProcesses(); // Actualizar la lista de procesos
+            LoadProcesses();
         }
 
         private void ButtonSelectDll_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Archivos DLL (*.dll)|*.dll";
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Filter = "Archivos DLL (*.dll)|*.dll"
+            };
 
             if (openFileDialog.ShowDialog() == true)
             {
-                _dllPath = openFileDialog.FileName; // Seleccionar una DLL mediante un cuadro de diálogo
+                _dllPath = openFileDialog.FileName;
             }
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            // Iniciar la descarga del DLL más reciente cuando se haga clic en "Actualizar DLL".
             await DownloadLatestDll();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            this.Close(); // Cerrar la aplicación
+            this.Close();
         }
 
         private void MinimizeButton_Click(object sender, RoutedEventArgs e)
         {
-            this.WindowState = WindowState.Minimized; // Minimizar la ventana
+            this.WindowState = WindowState.Minimized;
         }
 
         private void MaximizeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.WindowState == WindowState.Maximized)
-            {
-                this.WindowState = WindowState.Normal; // Restaurar la ventana
-            }
-            else
-            {
-                this.WindowState = WindowState.Maximized; // Maximizar la ventana
-            }
+            this.WindowState = this.WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
         }
 
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
-                this.DragMove(); // Mover la ventana arrastrando el título
+            {
+                this.DragMove();
+            }
         }
     }
 }
+
