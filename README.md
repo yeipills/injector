@@ -1,47 +1,47 @@
 # Inyector de DLLs
 
-Este proyecto proporciona un programa en C# que permite inyectar una DLL en procesos en ejecución. El programa lista los procesos activos y permite seleccionar uno para inyectar la DLL.
+El inyector de DLLs es una herramienta desarrollada en C# que permite inyectar bibliotecas dinámicas (DLLs) en procesos en ejecución en sistemas Windows. Esta herramienta es útil para pruebas, desarrollo y tareas relacionadas con la modificación de procesos en tiempo real.
 
-## Comenzando
+## 🚀 Características
 
-Estas instrucciones proporcionan una guía para obtener una copia del proyecto en ejecución en tu máquina local.
+- Listado de procesos activos en el sistema.
+- Selección e inyección de DLLs en procesos específicos.
+- Interfaz gráfica intuitiva y fácil de usar.
 
-### Pre-requisitos
+## 🛠️ Requisitos
 
-Para poder ejecutar este programa necesitas:
+- Microsoft .NET Framework 4.7.2 o superior.
+- Entorno de desarrollo compatible con C# (recomendado: Microsoft Visual Studio).
 
-1. Microsoft .NET Framework 4.7.2 o superior.
-2. Un entorno de desarrollo compatible con C#, como Microsoft Visual Studio.
+## 📦 Instalación y Uso
 
-### Instalación
-
-Sigue estos pasos para ejecutar el proyecto:
-
-1. Clona el repositorio
+1. **Clonar el repositorio**:
+   ```bash
+   git clone https://github.com/yeipills/injector.git
    ```
-   git clone https://github.com/tu_nombre_de_usuario/dll-injector.git
-   ```
-3. Abre el archivo .sln en tu entorno de desarrollo
 
-4. Compila y ejecuta el programa.
+2. **Abrir el proyecto**:
+   Navega al directorio del proyecto y abre el archivo `.sln` con tu entorno de desarrollo.
 
-## Uso
+3. **Compilar y ejecutar**:
+   Una vez abierto en el entorno de desarrollo, compila y ejecuta el programa.
 
-1. Al iniciar el programa, se mostrará una lista de los procesos activos.
-2. Selecciona el proceso en el que deseas inyectar la DLL.
-3. Presiona el botón "Seleccionar DLL" y selecciona el archivo DLL a inyectar.
-4. Finalmente, presiona "Inyectar" para inyectar la DLL en el proceso seleccionado.
+4. **Uso**:
+   - Al iniciar el programa, verás una lista de los procesos activos.
+   - Selecciona el proceso en el que deseas inyectar la DLL.
+   - Haz clic en el botón "Seleccionar DLL" y elige el archivo DLL que deseas inyectar.
+   - Haz clic en "Inyectar" para inyectar la DLL en el proceso seleccionado.
 
-## Contribución
+## 🤝 Contribuciones
 
-Las contribuciones son muy apreciadas. Para contribuir:
+Las contribuciones son bienvenidas y apreciadas. Si deseas contribuir:
 
-1. Haz un Fork del proyecto
-2. Crea tu rama de características (`git checkout -b feature/AmazingFeature`)
-3. Haz commit de tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Haz Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+1. Haz un Fork del proyecto.
+2. Crea tu rama de características (`git checkout -b feature/AmazingFeature`).
+3. Realiza y confirma tus cambios (`git commit -m 'Add some AmazingFeature'`).
+4. Sube tus cambios a tu rama (`git push origin feature/AmazingFeature`).
+5. Abre un Pull Request.
 
-## Licencia
+## 📜 Licencia
 
-Este proyecto está bajo la licencia GNU. Ver `LICENSE` para más información.
+Este proyecto está bajo la licencia GNU. Consulta el archivo `LICENSE` para obtener más detalles.
