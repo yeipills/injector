@@ -33,36 +33,24 @@ jobs:
     - name: Get release ID
       id: get_release_id
       run: |
-        RELEASE_ID=$(curl --silent "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/tags/v1.0.0" \
+        RELEASE_ID=$(curl --silent "https://api.github.com/repos/yeipills/injector/releases/tags/v1.0.0" \
           -H "Authorization: token ${{ secrets.GIT_TOKEN }}" | jq '.id')
         echo "::set-output name=release_id::$RELEASE_ID"
       shell: bash
 
-    - name: Create or Update Release
+    - name: Create New Release
       run: |
-        if [ -z "${{ steps.get_release_id.outputs.release_id }}" ]; then
-          echo "Creating new release..."
-          # Create a new release
-          curl -X POST "https://api.github.com/repos/$GITHUB_REPOSITORY/releases" \
-            -H "Authorization: token ${{ secrets.GIT_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "tag_name": "v1.0.0",
-              "name": "Release v1.0.0",
-              "draft": false,
-              "prerelease": false
-            }'
-        else
-          echo "Updating existing release..."
-          # Update the existing release
-          curl -X PATCH "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/${{ steps.get_release_id.outputs.release_id }}" \
-            -H "Authorization: token ${{ secrets.GIT_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "name": "Release v1.0.0",
-              "body": "Updated release description"
-            }'
-        fi
+        echo "Creating new release..."
+        # Create a new release
+        curl -X POST "https://api.github.com/repos/yeipills/injector/releases" \
+          -H "Authorization: token ${{ secrets.GIT_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "tag_name": "v1.0.0",
+            "name": "Release v1.0.0",
+            "draft": false,
+            "prerelease": false
+          }'
       shell: bash
 
     - name: Upload Release Asset
