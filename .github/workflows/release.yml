@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build, Release, or Update
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  build:
+  build_and_release:
     runs-on: windows-latest
 
     steps:
@@ -30,21 +30,45 @@ jobs:
     - name: Archive files
       run: Compress-Archive -Path ./publish/* -DestinationPath ./injector.zip
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
-      with:
-        tag_name: v1.0.0
-        release_name: Release v1.0.0
-        draft: false
-        prerelease: false
+    - name: Get release ID
+      id: get_release_id
+      run: |
+        RELEASE_ID=$(curl --silent "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/tags/v1.0.0" \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" | jq '.id')
+        echo "::set-output name=release_id::$RELEASE_ID"
+      shell: bash
+
+    - name: Create or Update Release
+      run: |
+        if [ -z "${{ steps.get_release_id.outputs.release_id }}" ]; then
+          echo "Creating new release..."
+          # Create a new release
+          curl -X POST "https://api.github.com/repos/$GITHUB_REPOSITORY/releases" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "tag_name": "v1.0.0",
+              "name": "Release v1.0.0",
+              "draft": false,
+              "prerelease": false
+            }'
+        else
+          echo "Updating existing release..."
+          # Update the existing release
+          curl -X PATCH "https://api.github.com/repos/$GITHUB_REPOSITORY/releases/${{ steps.get_release_id.outputs.release_id }}" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "Release v1.0.0",
+              "body": "Updated release description"
+            }'
+        fi
+      shell: bash
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./injector.zip
