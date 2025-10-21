@@ -1,20 +1,23 @@
-name: Build, Release, or Update
+name: Build and Release
 
 on:
   push:
-    branches:
-      - master
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build_and_release:
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 6.0.x
 
@@ -30,35 +33,47 @@ jobs:
     - name: Archive files
       run: Compress-Archive -Path ./publish/* -DestinationPath ./injector.zip
 
-    - name: Get release ID
-      id: get_release_id
+    - name: Get version from tag
+      id: get_version
       run: |
-        RELEASE_ID=$(curl --silent "https://api.github.com/repos/yeipills/injector/releases/tags/v1.0.0" \
-          -H "Authorization: token ${{ secrets.GIT_TOKEN }}" | jq '.id')
-        echo "::set-output name=release_id::$RELEASE_ID"
-      shell: bash
+        if ("${{ github.ref }}" -match "refs/tags/(.*)") {
+          $version = $matches[1]
+        } else {
+          $version = "dev-build"
+        }
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+      shell: pwsh
 
-    - name: Create New Release
-      run: |
-        echo "Creating new release..."
-        # Create a new release
-        curl -X POST "https://api.github.com/repos/yeipills/injector/releases" \
-          -H "Authorization: token ${{ secrets.GIT_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "tag_name": "v1.0.0",
-            "name": "Release v1.0.0",
-            "draft": false,
-            "prerelease": false
-          }'
-      shell: bash
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+    - name: Create Release and Upload Asset
+      uses: softprops/action-gh-release@v1
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./injector.zip
-        asset_name: injector.zip
-        asset_content_type: application/zip
+        files: ./injector.zip
+        tag_name: ${{ steps.get_version.outputs.version }}
+        name: Release ${{ steps.get_version.outputs.version }}
+        draft: false
+        prerelease: false
+        body: |
+          ## DLL Injector - ${{ steps.get_version.outputs.version }}
+
+          Professional and secure DLL injection tool for Windows.
+
+          ### Features
+          - Process enumeration
+          - Safe DLL injection with validation
+          - Architecture matching (32-bit/64-bit)
+          - PE file validation
+          - Comprehensive error handling
+
+          ### Requirements
+          - Windows 7 or later
+          - .NET 6.0 Runtime
+          - Administrator privileges
+
+          ### Installation
+          1. Download `injector.zip`
+          2. Extract to your desired location
+          3. Run `injector.exe` as Administrator
+
+          See [README.md](https://github.com/yeipills/injector/blob/master/README.md) for full documentation.
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
