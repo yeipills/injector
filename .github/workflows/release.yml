@@ -24,14 +24,35 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore injector\injector.csproj
 
-    - name: Build
-      run: dotnet build injector\injector.csproj --configuration Release --no-restore
+    - name: Publish x64 (Self-contained, Single-file)
+      run: |
+        dotnet publish injector\injector.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          --self-contained true `
+          --output ./publish-x64 `
+          -p:PublishSingleFile=true `
+          -p:IncludeNativeLibrariesForSelfExtract=true `
+          -p:PublishReadyToRun=true `
+          -p:PublishTrimmed=false
 
-    - name: Publish
-      run: dotnet publish injector\injector.csproj --configuration Release --no-build --output ./publish
+    - name: Publish x86 (Self-contained, Single-file)
+      run: |
+        dotnet publish injector\injector.csproj `
+          --configuration Release `
+          --runtime win-x86 `
+          --self-contained true `
+          --output ./publish-x86 `
+          -p:PublishSingleFile=true `
+          -p:IncludeNativeLibrariesForSelfExtract=true `
+          -p:PublishReadyToRun=true `
+          -p:PublishTrimmed=false
 
-    - name: Archive files
-      run: Compress-Archive -Path ./publish/* -DestinationPath ./injector.zip
+    - name: Archive x64 build
+      run: Compress-Archive -Path ./publish-x64/injector.exe -DestinationPath ./injector-x64.zip
+
+    - name: Archive x86 build
+      run: Compress-Archive -Path ./publish-x86/injector.exe -DestinationPath ./injector-x86.zip
 
     - name: Get version from tag
       id: get_version
@@ -44,10 +65,12 @@ jobs:
         echo "version=$version" >> $env:GITHUB_OUTPUT
       shell: pwsh
 
-    - name: Create Release and Upload Asset
+    - name: Create Release and Upload Assets
       uses: softprops/action-gh-release@v1
       with:
-        files: ./injector.zip
+        files: |
+          ./injector-x64.zip
+          ./injector-x86.zip
         tag_name: ${{ steps.get_version.outputs.version }}
         name: Release ${{ steps.get_version.outputs.version }}
         draft: false
@@ -57,23 +80,40 @@ jobs:
 
           Professional and secure DLL injection tool for Windows.
 
-          ### Features
-          - Process enumeration
-          - Safe DLL injection with validation
-          - Architecture matching (32-bit/64-bit)
-          - PE file validation
-          - Comprehensive error handling
+          ### 🎯 Standalone Builds - No .NET Installation Required!
 
-          ### Requirements
-          - Windows 7 or later
-          - .NET 6.0 Runtime
-          - Administrator privileges
+          This release includes **self-contained, single-file executables** that do NOT require .NET Runtime to be installed.
 
-          ### Installation
-          1. Download `injector.zip`
-          2. Extract to your desired location
-          3. Run `injector.exe` as Administrator
+          **Download the version for your system:**
+          - `injector-x64.zip` - For 64-bit Windows (most common)
+          - `injector-x86.zip` - For 32-bit Windows (legacy systems)
 
-          See [README.md](https://github.com/yeipills/injector/blob/master/README.md) for full documentation.
+          ### ✨ Features
+          - Process enumeration and selection
+          - Safe DLL injection with comprehensive validation
+          - Automatic architecture matching (32-bit/64-bit)
+          - PE file validation for security
+          - Comprehensive error handling with detailed messages
+          - Modern WPF interface
+
+          ### 📋 Requirements
+          - **Operating System**: Windows 7 or later
+          - **Permissions**: Administrator privileges
+          - **No .NET installation needed** - Everything is bundled!
+
+          ### 🚀 Quick Start
+          1. Download the appropriate ZIP file for your system (x64 or x86)
+          2. Extract `injector.exe` to any location
+          3. Right-click and "Run as Administrator"
+          4. Select a process, choose your DLL, and inject!
+
+          ### 📖 Documentation
+          See [README.md](https://github.com/yeipills/injector/blob/master/README.md) for detailed documentation.
+
+          ### 📦 Build Info
+          - Build Type: Self-contained, Single-file
+          - Runtime: Embedded .NET 6.0
+          - Compilation: ReadyToRun (R2R) optimized
+          - Architecture: x64 and x86 builds included
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

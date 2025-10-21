@@ -14,20 +14,32 @@ A professional and secure DLL injection tool developed in C# with WPF that allow
 
 ## 🛠️ Requirements
 
+### For End Users (Pre-built Releases)
 - **Operating System**: Windows 7 or later
-- **.NET Runtime**: .NET 6.0 or higher
 - **Permissions**: Administrator privileges (required for process injection)
-- **Development** (optional): Visual Studio 2022 or .NET SDK 6.0+
+- **No .NET installation required!** - Standalone executables include everything needed
+
+### For Developers (Building from Source)
+- **.NET SDK**: .NET 6.0 SDK or higher
+- **Development Environment**: Visual Studio 2022, VS Code, or Rider (optional)
 
 ## 📦 Installation
 
-### Pre-built Binary
+### Pre-built Binary (Recommended)
 
 1. Download the latest release from the [Releases](https://github.com/yeipills/injector/releases) page
-2. Extract the archive to your desired location
-3. Run `injector.exe` as Administrator
+   - **injector-x64.zip** - For 64-bit Windows (recommended for most users)
+   - **injector-x86.zip** - For 32-bit Windows (legacy systems)
+
+2. Extract `injector.exe` to your desired location
+
+3. Right-click `injector.exe` and select "Run as Administrator"
+
+**That's it!** No .NET installation needed - everything is bundled in a single executable.
 
 ### Build from Source
+
+If you want to build from source or contribute to the project:
 
 1. **Clone the repository**:
    ```bash
@@ -35,15 +47,21 @@ A professional and secure DLL injection tool developed in C# with WPF that allow
    cd injector
    ```
 
-2. **Build the project**:
+2. **Build as standalone executable** (no .NET runtime required to run):
    ```bash
-   dotnet build -c Release
+   # For 64-bit Windows
+   dotnet publish injector/injector.csproj -c Release -r win-x64 --self-contained
+
+   # For 32-bit Windows
+   dotnet publish injector/injector.csproj -c Release -r win-x86 --self-contained
    ```
 
-3. **Run the application**:
+3. **Or build framework-dependent** (requires .NET 6 runtime):
    ```bash
-   dotnet run --project injector
+   dotnet build injector/injector.csproj -c Release
    ```
+
+The standalone builds will be in `injector/bin/Release/net6.0-windows/win-x64/publish/` (or `win-x86`)
 
 ## 📖 Usage
 

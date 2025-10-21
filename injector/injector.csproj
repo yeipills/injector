@@ -6,13 +6,34 @@
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- Application info -->
+    <AssemblyName>injector</AssemblyName>
+    <Product>DLL Injector</Product>
+    <Version>1.0.0</Version>
+    <Authors>yeipills</Authors>
+    <Company>yeipills</Company>
+    <Copyright>Copyright © 2025</Copyright>
+    <Description>Professional and secure DLL injection tool for Windows</Description>
+  </PropertyGroup>
+
+  <!-- Self-contained deployment settings (used when publishing with --self-contained) -->
+  <PropertyGroup Condition="'$(SelfContained)' == 'true'">
+    <!-- Single-file publication -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+
+    <!-- Trimming disabled for WPF compatibility -->
+    <PublishTrimmed>false</PublishTrimmed>
+
+    <!-- Ready to Run compilation for better startup performance -->
+    <PublishReadyToRun>true</PublishReadyToRun>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Diseño sin título%282%29.svg" />
     <None Remove="newww.ico" />
   </ItemGroup>
-
 
   <ItemGroup>
     <Resource Include="newww.ico" />
